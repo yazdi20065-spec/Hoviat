@@ -572,6 +572,28 @@ input[type="range"]::-moz-range-thumb{width:22px;height:22px;border:2px solid va
 html[data-anim="off"] *{animation:none!important;transition:none!important}
 html[data-fx="none"] .fx-layer{display:none}
 html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
+
+/* Lightweight cinematic face scanner */
+.face-scan-ui{position:absolute;inset:0;pointer-events:none;overflow:hidden;color:#dffaff;font-family:ui-monospace,monospace;text-shadow:0 1px 5px #00131d;}
+.scan-corners{position:absolute;inset:12% 18%;border:1px solid rgba(76,226,255,.16);border-radius:28px;}
+.scan-corners i{position:absolute;width:26px;height:26px;border-color:#45e7ff;border-style:solid;filter:drop-shadow(0 0 5px rgba(69,231,255,.8));}
+.scan-corners i:nth-child(1){top:-1px;left:-1px;border-width:3px 0 0 3px;border-radius:12px 0 0}
+.scan-corners i:nth-child(2){top:-1px;right:-1px;border-width:3px 3px 0 0;border-radius:0 12px 0 0}
+.scan-corners i:nth-child(3){bottom:-1px;left:-1px;border-width:0 0 3px 3px;border-radius:0 0 0 12px}
+.scan-corners i:nth-child(4){bottom:-1px;right:-1px;border-width:0 3px 3px 0;border-radius:0 0 12px}
+.scan-sweep{position:absolute;left:18%;right:18%;top:14%;height:2px;background:linear-gradient(90deg,transparent,#54f2ff,transparent);box-shadow:0 0 14px 3px rgba(62,226,255,.42);animation:faceSweep 3.4s ease-in-out infinite;}
+.scan-hud{position:absolute;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;font-size:9px;letter-spacing:1px;color:#d9faff;opacity:.88}
+.scan-hud-top{top:12px}.scan-hud-bottom{bottom:12px;font-size:8px;opacity:.72}
+.scan-hud b{font-size:8px;color:#73ffc6;border:1px solid rgba(115,255,198,.5);border-radius:20px;padding:3px 7px}
+.scan-dot{width:6px;height:6px;border-radius:50%;background:#64ffc4;box-shadow:0 0 9px #64ffc4;display:inline-block;margin-inline-end:6px;animation:scanPulse 1.5s infinite}
+@keyframes faceSweep{0%,100%{top:15%;opacity:.5}50%{top:84%;opacity:1}}
+@keyframes scanPulse{50%{opacity:.35;transform:scale(.75)}}
+.consent-card{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:start;border-color:rgba(70,220,255,.28);background:linear-gradient(135deg,var(--surface),rgba(25,120,150,.10));}
+.consent-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#65eaff;background:rgba(48,205,235,.12);}
+.consent-icon svg{width:22px;height:22px}.consent-copy b{display:block;font-size:.94rem}.consent-copy p{margin:5px 0 0;color:var(--text-2);font-size:.76rem;line-height:1.9}.consent-actions{grid-column:1/-1;margin-top:3px}
+html[data-anim="off"] .scan-sweep,html[data-anim="off"] .scan-dot,.scan-sweep.paused,.scan-dot.paused{animation:none}
+@media(prefers-reduced-motion:reduce){.scan-sweep,.scan-dot{animation:none}.face-scan-ui{opacity:.72}}
+
 </style>
 </head>
 <body>
@@ -697,7 +719,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
 (function () {
   'use strict';
 
-  const APP = { name: 'CHEHREHBAN AI', fa: 'چهره‌بان هوشمند', version: '1.0.0', build: '2026-10-28' };
+  const APP = { name: 'CHEHREHBAN AI', fa: 'چهره‌بان هوشمند', version: '1.2.1', build: '2026-11-01' };
 
   /* ---------- ابزارهای عمومی ---------- */
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -769,7 +791,13 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     { id: 'cyber', name: 'Cyber Neon', accent: '#22d3ee', accent2: '#f43f5e', hue: 288, sat: 30, mode: 'dark' },
     { id: 'minimal', name: 'Minimal Professional', accent: '#1d4ed8', accent2: '#475569', hue: 215, sat: 8, mode: 'light' },
     { id: 'ocean', name: 'Ocean Blue', accent: '#2563eb', accent2: '#06b6d4', hue: 214, sat: 34, mode: 'dark' },
-    { id: 'rose', name: 'Rose Gold', accent: '#be123c', accent2: '#b45309', hue: 345, sat: 26, mode: 'light' }
+    { id: 'rose', name: 'Rose Gold', accent: '#be123c', accent2: '#b45309', hue: 345, sat: 26, mode: 'light' },
+    { id: 'aurora', name: 'Aurora Glass', accent: '#5eead4', accent2: '#a78bfa', hue: 174, sat: 34, mode: 'dark' },
+    { id: 'matrix', name: 'Matrix Core', accent: '#4ade80', accent2: '#bef264', hue: 136, sat: 32, mode: 'dark' },
+    { id: 'crimson', name: 'Crimson Edge', accent: '#fb7185', accent2: '#f97316', hue: 350, sat: 38, mode: 'dark' },
+    { id: 'graphite', name: 'Graphite Studio', accent: '#cbd5e1', accent2: '#64748b', hue: 215, sat: 10, mode: 'dark' },
+    { id: 'lavender', name: 'Lavender Mist', accent: '#7c3aed', accent2: '#db2777', hue: 268, sat: 32, mode: 'light' },
+    { id: 'solar', name: 'Solar Flare', accent: '#ea580c', accent2: '#eab308', hue: 28, sat: 42, mode: 'dark' }
   ];
 
   const FX_LIST = [
@@ -788,7 +816,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     fontSize: 15,
     density: 'normal',
     anim: true,
-    fx: 'particles',
+    fx: 'none',
     fxIntensity: 'low',
     threshold: 0.6,
     autoActivate: false,
@@ -1025,7 +1053,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       if (!this.canvas) return;
       this.ctx = this.canvas.getContext('2d', { alpha: true });
       this.sync();
-      window.addEventListener('resize', debounce(() => this.resize(), 220));
+      window.addEventListener('resize', debounce(() => this.resize(false), 350));
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) this.stop(); else this.sync();
       });
@@ -1035,39 +1063,53 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     },
     sync() {
       const s = Settings.data;
-      const want = (s.fx === 'none' || !s.anim || this.reduceMotion()) ? 'none' : s.fx;
-      if (want === this.mode) { if (want !== 'none') this.resize(); return; }
-      this.mode = want;
-      if (want === 'none') { this.stop(); return; }
-      this.resize();
-      this.start();
+      const want = (s.fx === 'none' || !s.anim || this.reduceMotion() || document.hidden) ? 'none' : s.fx;
+      const intensityChanged = this.lastIntensity !== s.fxIntensity;
+      if (want === 'none') {
+        this.mode = 'none';
+        this.stop();
+        return;
+      }
+      if (want !== this.mode) {
+        this.mode = want;
+        this.resize(true);
+      } else if (intensityChanged) {
+        this.resize(true);
+      }
+      this.lastIntensity = s.fxIntensity;
+      if (!this.raf) this.start();
     },
-    resize() {
-      if (!this.canvas) return;
-      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = window.innerWidth, h = window.innerHeight;
-      this.canvas.width = Math.floor(w * this.dpr);
-      this.canvas.height = Math.floor(h * this.dpr);
-      this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    resize(rebuildParticles) {
+      if (!this.canvas || !this.ctx) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
+      if (this.w === w && this.h === h && this.dpr === dpr && !rebuildParticles) return;
+      this.dpr = dpr;
+      this.canvas.width = Math.floor(w * dpr);
+      this.canvas.height = Math.floor(h * dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       this.w = w; this.h = h;
-      const density = Settings.data.fxIntensity === 'high' ? 1 : (Settings.data.fxIntensity === 'medium' ? 0.6 : 0.32);
-      const count = clamp(Math.round((w * h) / 26000 * density), 8, 90);
-      this.particles = [];
-      for (let i = 0; i < count; i++) {
-        this.particles.push({
-          x: Math.random() * w, y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22,
-          r: 0.7 + Math.random() * 1.8, a: 0.16 + Math.random() * 0.4,
-          ch: ['0', '1', '·', '+', '×'][Math.floor(Math.random() * 5)]
-        });
+      if (rebuildParticles || !this.particles.length) {
+        const density = Settings.data.fxIntensity === 'high' ? 0.48 : (Settings.data.fxIntensity === 'medium' ? 0.26 : 0.12);
+        const count = clamp(Math.round((w * h) / 36000 * density), 5, 36);
+        this.particles = [];
+        for (let i = 0; i < count; i++) {
+          this.particles.push({
+            x: Math.random() * w, y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 0.16, vy: (Math.random() - 0.5) * 0.16,
+            r: 0.7 + Math.random() * 1.3, a: 0.12 + Math.random() * 0.28,
+            ch: ['0', '1', '·', '+', '×'][Math.floor(Math.random() * 5)]
+          });
+        }
       }
     },
     start() {
-      this.stop();
-      if (!this.ctx) return;
-      const loop = () => {
+      if (this.raf || !this.ctx || this.mode === 'none' || document.hidden) return;
+      let lastFrame = 0;
+      const loop = (now) => {
+        if (this.mode === 'none' || document.hidden) { this.raf = null; return; }
+        if (now - lastFrame >= 32) { lastFrame = now; this.draw(); }
         this.raf = requestAnimationFrame(loop);
-        this.draw();
       };
       this.raf = requestAnimationFrame(loop);
     },
@@ -2075,20 +2117,30 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       const inputSize = opts.inputSize || 416;
       const scoreThreshold = opts.scoreThreshold || 0.5;
       const t0 = performance.now();
-      let detections;
+      let detections = [];
+      let lastError = null;
+      // Adaptive retry: if the first pass misses a face, retry at higher/lower
+      // resolutions and slightly more permissive confidence thresholds.
+      // This improves recall in some conditions; it is not a guarantee of identity.
+      const passes = [[inputSize, scoreThreshold]]; // predictable single-pass processing for mobile stability
       try {
-        const detectorOpts = new fa.TinyFaceDetectorOptions({ inputSize: inputSize, scoreThreshold: scoreThreshold });
-        detections = await fa
-          .detectAllFaces(input, detectorOpts)
-          .withFaceLandmarks(true)
-          .withFaceDescriptors();
+        for (let pass = 0; pass < passes.length; pass++) {
+          const detectorOpts = new fa.TinyFaceDetectorOptions({ inputSize: passes[pass][0], scoreThreshold: passes[pass][1] });
+          try {
+            detections = await fa.detectAllFaces(input, detectorOpts)
+              .withFaceLandmarks(true)
+              .withFaceDescriptors();
+            if (detections && detections.length) break;
+          } catch (e) { lastError = e; }
+        }
+        if ((!detections || !detections.length) && lastError) throw lastError;
       } catch (e) {
         const code = classifyTechnicalError(e);
         return withDetail(code === 'UNKNOWN' ? 'EXTRACT_FAILED' : code, e.message || String(e));
       }
       const ms = Math.round(performance.now() - t0);
       if (!detections || detections.length === 0) {
-        return { ok: true, faces: [], ms: ms, size: this.inputSize(input), detected: 0, message: ERRORS.NO_FACE.fa };
+        return { ok: true, faces: [], ms: ms, size: this.inputSize(input), detected: 0, message: ERRORS.NO_FACE.fa, adaptivePasses: 1 };
       }
       const faces = [];
       for (const d of detections) {
@@ -2099,7 +2151,12 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
             x: Math.round(d.detection.box.x), y: Math.round(d.detection.box.y),
             width: Math.round(d.detection.box.width), height: Math.round(d.detection.box.height)
           },
-          descriptor: Array.from(d.descriptor)
+          descriptor: Array.from(d.descriptor),
+          quality: {
+            confidence: Number(d.detection.score.toFixed(4)),
+            faceAreaRatio: Number(((d.detection.box.width * d.detection.box.height) / Math.max(1, this.inputSize(input).w * this.inputSize(input).h)).toFixed(5)),
+            sizeHint: (d.detection.box.width < 72 || d.detection.box.height < 72) ? 'small' : 'usable'
+          }
         });
       }
       if (!faces.length) return withDetail('EXTRACT_FAILED', 'چهره شناسایی شد اما بردار ویژگی ۱۲۸ بعدی تولید نشد.');
@@ -2514,7 +2571,8 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       '</div></div>' +
 
       '<div class="card">' +
-      '<div class="card-head"><h2 class="card-title">تصاویر چهره<small>هرچه تصاویر متنوع‌تر باشند (زاویه، نور، عینک)، تطبیق دقیق‌تر می‌شود</small></h2>' +
+      '<div class="alert info" style="margin-bottom:12px">' + icon('i-lock') + '<div><b>ثبت مسئولانه تصاویر</b><br>فقط با رضایت آگاهانه صاحب تصویر ثبت کنید. برای هر پرونده، ۳ تا ۵ عکس واضح از همان فرد با زاویه‌های ملایم و نور یکنواخت می‌تواند به پایداری تطبیق کمک کند؛ نتیجه هرگز قطعی یا تضمینی نیست.</div></div>' +
+      '<div class="card-head"><h2 class="card-title">تصاویر چهره<small>تصاویر مکمل از روبه‌رو و زاویه‌های ملایم؛ با نور و کیفیت مناسب</small></h2>' +
       '<span class="badge-num" id="imgCount">' + fmtInt(existingImages.length + f.images.length) + '</span></div>' +
       '<div class="btn-row stretch">' +
       '<button class="btn primary" type="button" data-act="pick-gallery">' + icon('i-image') + ' انتخاب از گالری</button>' +
@@ -2600,7 +2658,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       }
       try {
         const imgEl = await Images.loadImage(proc.dataUrl);
-        const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 416 }));
+        const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 352, retry: false }));
         if (!res.ok) {
           item.processing = 'error'; item.error = res.title + ' — ' + res.message;
           toast(res.title, 'error', 4800);
@@ -2855,7 +2913,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     if (out) out.innerHTML = '<div class="card"><div class="row" style="gap:9px"><span class="spinner"></span><span class="grow" style="font-size:.8rem">تشخیص چهره و استخراج ویژگی…</span></div>' + progressBar(60, true) + '</div>';
     try {
       const imgEl = await Images.loadImage(r.dataUrl);
-      const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 416 }));
+      const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 352, retry: false }));
       if (!res.ok) {
         r.result = { error: res };
         await Stats.bump('matchesFail');
@@ -3043,6 +3101,8 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     busy: false,
     lastResult: null,
     shot: null,
+    consent: 'pending',
+    consentSaving: false,
     error: null,
     overlay: null,
 
@@ -3147,14 +3207,18 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     async takeShot() {
       const video = document.getElementById('camVideo');
       if (!video || !this.active) { toast('دوربین فعال نیست.', 'warn'); return; }
+      if (this.busy) { toast('پردازش قبلی هنوز تمام نشده؛ یک لحظه صبر کنید.', 'info', 2200); return; }
+      if (this.live) { clearInterval(this.liveTimer); this.liveTimer = null; this.live = false; }
       const url = this.grabFrame(video, 900);
       if (!url) { toast('تصویر دوربین آماده نیست. کمی صبر کنید.', 'warn'); return; }
       this.shot = url;
+      this.lastResult = null;
+      this.consent = 'pending';
       CB.Router.render();
       await this.processShot(url);
     },
 
-    async processShot(url) {
+    async processShot(url, precise) {
       if (!Engine.isReady()) { toast('برای پردازش، ابتدا موتور را فعال کنید.', 'warn'); return; }
       if (this.busy) return;
       this.busy = true;
@@ -3162,7 +3226,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       if (out) out.innerHTML = '<div class="card"><div class="row" style="gap:9px"><span class="spinner"></span><span class="grow" style="font-size:.8rem">پردازش فریم دوربین…</span></div></div>';
       try {
         const imgEl = await Images.loadImage(url);
-        const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 416 }));
+        const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: precise ? 608 : 352, scoreThreshold: precise ? 0.38 : 0.5, retry: false }));
         if (!res.ok) {
           this.lastResult = { error: res, at: Date.now() };
         } else {
@@ -3174,6 +3238,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
           if (accepted.length) await Stats.bump('matchesOk', accepted.length);
           if (faces.length - accepted.length) await Stats.bump('matchesFail', faces.length - accepted.length);
           this.lastResult = { faces: faces, ms: res.ms, detected: faces.length, accepted: accepted.length, at: Date.now(), size: res.size };
+          this.consent = 'pending';
           await Logs.add('match_result', 'پردازش دوربین: ' + faces.length + ' چهره، ' + accepted.length + ' تطبیق مطمئن', accepted.length ? 'success' : 'info');
         }
         await Stats.bump('operations');
@@ -3181,6 +3246,47 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
         this.lastResult = { error: { title: 'خطای پردازش', message: e.message || '' }, at: Date.now() };
       }
       this.busy = false;
+      CB.Router.render();
+    },
+
+    async consentSave() {
+      if (this.consentSaving || this.consent !== 'pending') return;
+      const r = this.lastResult;
+      const accepted = r && !r.error ? (r.faces || []).filter((f) => f.match && f.match.accepted && f.match.record) : [];
+      if (accepted.length !== 1 || !r || r.faces.length !== 1) {
+        toast('برای جلوگیری از ثبت اشتباه، فقط یک چهرهٔ تنها با تطبیق مطمئن قابل ذخیره است. ابتدا پروندهٔ درست را ثبت یا انتخاب کنید.', 'warn', 5200);
+        this.consent = 'needs-record';
+        CB.Router.render();
+        return;
+      }
+      if (!DB.available) { toast('ذخیره‌سازی محلی در دسترس نیست؛ عکس ذخیره نشد.', 'error'); return; }
+      this.consentSaving = true;
+      try {
+        const face = accepted[0];
+        const img = await Images.loadImage(this.shot);
+        const saved = await Records.attachImages(face.match.record, [{
+          dataUrl: this.shot,
+          width: img.naturalWidth || img.width,
+          height: img.naturalHeight || img.height,
+          bytes: Math.round(this.shot.length * 0.75),
+          fileName: 'camera-consented-' + Date.now() + '.jpg',
+          descriptors: [{ score: face.score, box: face.box, descriptor: face.descriptor }]
+        }], { ms: r.ms });
+        this.consent = saved.added && saved.faces ? 'saved' : 'failed';
+        await Logs.add('camera_consent', 'ذخیره عکس جدید با رضایت کاربر برای پرونده ' + Records.name(face.match.record), 'success');
+        toast(this.consent === 'saved' ? 'عکس با رضایت شما به پرونده «' + Records.name(face.match.record) + '» اضافه شد.' : 'ذخیره عکس کامل نشد.', this.consent === 'saved' ? 'success' : 'error', 4200);
+      } catch (e) {
+        this.consent = 'failed';
+        toast('ذخیره عکس انجام نشد: ' + (e.message || ''), 'error', 4200);
+      } finally {
+        this.consentSaving = false;
+        CB.Router.render();
+      }
+    },
+    consentDecline() {
+      if (this.consent !== 'pending') return;
+      this.consent = 'declined';
+      toast('عکس جدید ذخیره نشد.', 'info', 2200);
       CB.Router.render();
     },
 
@@ -3204,7 +3310,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
         this.busy = true;
         try {
           const imgEl = await Images.loadImage(url);
-          const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 224 }));
+          const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 224, retry: false }));
           if (res.ok) {
             const faces = res.faces.map((f) => {
               const matches = Records.match(f.descriptor, Settings.data.threshold);
@@ -3281,6 +3387,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       '<div class="preview-box" style="background:#000;min-height:180px;position:relative">' +
       '<video id="camVideo" autoplay playsinline muted style="width:100%;display:block;max-height:56vh;object-fit:cover;' + (cam.facing === 'user' && Settings.data.mirror ? 'transform:scaleX(-1);' : '') + '"></video>' +
       '<canvas id="camOverlay" style="position:absolute;inset:0;pointer-events:none;' + (cam.facing === 'user' && Settings.data.mirror ? 'transform:scaleX(-1);' : '') + '"></canvas>' +
+      '<div class="face-scan-ui" aria-hidden="true"><div class="scan-corners"><i></i><i></i><i></i><i></i></div><div class="scan-sweep"></div><div class="scan-hud scan-hud-top"><span class="scan-dot"></span> VISION ANALYZER <b>LIVE</b></div><div class="scan-hud scan-hud-bottom"><span>FACE TRACKING</span><span>● SECURE LOCAL</span></div></div>' +
       (!cam.active ? '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#94a3b8;font-size:.82rem">دوربین خاموش است</div>' : '') +
       '</div>' +
       '<div class="btn-row stretch" style="margin-top:12px">' +
@@ -3312,22 +3419,35 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
   function cameraResultHtml() {
     const r = Camera.lastResult;
     if (!r) return '';
+    let body = '';
     if (r.error) {
-      return '<div class="card"><div class="alert danger">' + icon('i-warn') + '<div><b>' + esc(r.error.title) + '</b><br>' + esc(r.error.message) + '</div></div></div>';
+      body = '<div class="card"><div class="alert danger">' + icon('i-warn') + '<div><b>' + esc(r.error.title) + '</b><br>' + esc(r.error.message) + '</div></div></div>';
+    } else if (!r.faces || !r.faces.length) {
+      body = '<div class="card"><div class="alert warn">' + icon('i-warn') + '<div><b>چهره‌ای پیدا نشد.</b><br>چهره را کامل در کادر قرار دهید و نور کافی باشد. می‌توانید یک‌بار با پردازش دقیق‌تر و سنگین‌تر تلاش کنید.<div style="margin-top:9px"><button class="btn sm primary" type="button" data-act="cam-precise">پردازش دقیق‌تر</button></div></div></div></div>';
+    } else {
+      body = '<div class="card"><div class="card-head"><h2 class="card-title">نتیجه تحلیل چهره<small>زمان پردازش: ' + fmtMs(r.ms) + ' · ' + faNum(r.detected) + ' چهره</small></h2>' +
+        '<span class="chip ' + (r.accepted ? 'success' : 'warn') + '">' + faNum(r.accepted) + ' تطبیق</span></div>' +
+        '<div class="list">' + r.faces.map((f, i) => {
+          const ok = !!(f.match && f.match.accepted);
+          return '<div class="list-item"><div class="li-ico">' + icon(ok ? 'i-check' : 'i-help') + '</div>' +
+            '<div class="li-main"><div class="li-title">' + esc(ok && f.match.record ? Records.name(f.match.record) : 'چهره ' + faNum(i + 1) + ' — بدون تطبیق مطمئن') + '</div>' +
+            '<div class="li-sub">' + (f.match ? 'فاصله تطبیق: ' + esc(fmtDistance(f.match.distance)) + ' · آستانه: ' + esc(faNum(Settings.data.threshold.toFixed(2))) : 'پرونده‌ای برای مقایسه موجود نیست') + '</div></div>' +
+            (ok && f.match.record ? '<button class="btn sm ghost" type="button" data-open-record="' + esc(f.match.record.id) + '">مشاهده پرونده</button>' : '') + '</div>';
+        }).join('') + '</div>' +
+        '<div class="hint" style="margin-top:8px">این نتیجه فقط میزان شباهت با پرونده‌های ثبت‌شده را نشان می‌دهد و تأیید قطعی هویت نیست.</div></div>';
     }
-    if (!r.faces || !r.faces.length) {
-      return '<div class="card"><div class="alert warn">' + icon('i-warn') + '<div><b>چهره‌ای پیدا نشد.</b><br>چهره را کامل در کادر قرار دهید، نور کافی باشد و به دوربین نگاه کنید.</div></div></div>';
+    if (!r.error && r.faces && r.faces.length && Camera.consent === 'pending') {
+      body += '<div class="card consent-card"><div class="consent-icon">' + icon('i-shield') + '</div><div class="consent-copy"><b>ذخیره عکس برای شناسایی‌های بعدی؟</b><p>این همان عکسی است که همین لحظه بررسی شد. فقط با اجازه شما به پروندهٔ محلی اضافه می‌شود و بدون تأیید شما ذخیره نخواهد شد.</p></div><div class="btn-row stretch consent-actions"><button class="btn primary" type="button" data-act="cam-consent-yes"' + (Camera.consentSaving ? ' disabled' : '') + '>' + (Camera.consentSaving ? 'در حال ذخیره…' : 'بله، ذخیره شود') + '</button><button class="btn ghost" type="button" data-act="cam-consent-no"' + (Camera.consentSaving ? ' disabled' : '') + '>خیر</button></div></div>';
+    } else if (Camera.consent === 'saved') {
+      body += '<div class="alert success">' + icon('i-check') + '<div><b>عکس با رضایت شما ذخیره شد.</b><br>این تصویر و ویژگی چهره به پروندهٔ محلی فرد اضافه شد.</div></div>';
+    } else if (Camera.consent === 'declined') {
+      body += '<div class="hint">درخواست شما ثبت شد؛ عکس جدید به پرونده اضافه نشد.</div>';
+    } else if (Camera.consent === 'needs-record') {
+      body += '<div class="alert warn">' + icon('i-info') + '<div>تطبیق مطمئنی با یک پرونده مشخص پیدا نشد؛ بنابراین برای جلوگیری از ثبت اشتباه، عکس به‌صورت خودکار به هیچ‌کس نسبت داده نشد. ابتدا پروندهٔ درست را انتخاب یا ایجاد کنید.<div style="margin-top:9px"><button class="btn sm" type="button" data-act="go-records">رفتن به پرونده‌ها</button></div></div></div>';
+    } else if (Camera.consent === 'failed') {
+      body += '<div class="alert danger">ذخیره‌سازی عکس انجام نشد. فضای ذخیره‌سازی یا دسترسی مرورگر را بررسی کنید.</div>';
     }
-    return '<div class="card"><div class="card-head"><h2 class="card-title">نتیجه پردازش<small>زمان: ' + fmtMs(r.ms) + ' · ' + faNum(r.detected) + ' چهره</small></h2>' +
-      '<span class="chip ' + (r.accepted ? 'success' : 'warn') + '">' + faNum(r.accepted) + ' تطبیق</span></div>' +
-      '<div class="list">' + r.faces.map((f, i) => {
-        const ok = !!(f.match && f.match.accepted);
-        return '<div class="list-item"><div class="li-ico">' + icon(ok ? 'i-check' : 'i-help') + '</div>' +
-          '<div class="li-main"><div class="li-title">' + esc(ok && f.match.record ? Records.name(f.match.record) : 'چهره ' + faNum(i + 1) + ' — بدون تطبیق مطمئن') + '</div>' +
-          '<div class="li-sub">' + (f.match ? 'فاصله: ' + esc(fmtDistance(f.match.distance)) + ' · آستانه: ' + esc(faNum(Settings.data.threshold.toFixed(2))) : 'پرونده‌ای برای مقایسه موجود نیست') + '</div></div>' +
-          (ok && f.match.record ? '<button class="btn sm ghost" type="button" data-open-record="' + esc(f.match.record.id) + '">مشاهده</button>' : '') + '</div>';
-      }).join('') + '</div>' +
-      '<div class="hint" style="margin-top:8px">نتیجه تطبیق، اعلام قطعی هویت نیست؛ فاصله کمتر از آستانه فقط یعنی شباهت بالا در فضای ویژگی مدل.</div></div>';
+    return body;
   }
 
   /* ============================================================
@@ -3346,7 +3466,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       CB.pageHead('بیشتر', 'تنظیمات، ظاهر، پشتیبان‌گیری، دستیار و راهنما') +
       '<div class="card"><div class="list">' +
       menuItem('go-settings', 'i-settings', 'تنظیمات موتور و داده', 'آستانه تطبیق، فعال‌سازی خودکار، ذخیره‌سازی') +
-      menuItem('go-appearance', 'i-palette', 'ظاهر و تم‌ها', '۱۰ تم آماده، حالت روشن/تاریک، اندازه نوشته، افکت‌ها') +
+      menuItem('go-appearance', 'i-palette', 'ظاهر و تم‌ها', 'تم‌های حرفه‌ای، حالت روشن/تاریک، اندازه نوشته و افکت‌ها') +
       menuItem('go-backup', 'i-download', 'پشتیبان‌گیری و بازیابی', fmtInt(c.records) + ' پرونده ذخیره‌شده — خروجی JSON') +
       menuItem('go-logs', 'i-chart', 'گزارش‌ها و تاریخچه', fmtInt(Logs.mem.length) + ' رویداد ثبت‌شده') +
       menuItem('go-assistant', 'i-bot', 'دستیار هوشمند چهره‌بان', 'راهنمای محلی (بدون اتصال به مدل زبانی)') +
@@ -3445,7 +3565,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     const s = Settings.data;
     Ui.view.innerHTML =
       '<section class="view-enter stack">' +
-      CB.pageHead('ظاهر و تم‌ها', 'شخصی‌سازی کامل رنگ، اندازه و افکت‌ها') +
+      CB.pageHead('ظاهر و تم‌ها', 'شخصی‌سازی رنگ، اندازه و افکت‌ها با اولویت سرعت و روانی') +
       '<div class="card"><div class="card-head"><h2 class="card-title">تم آماده</h2><span class="chip accent">' + faNum(CB.THEMES.length) + ' تم</span></div>' +
       '<div class="theme-grid">' + CB.THEMES.map((t) => {
         const c1 = t.accent, c2 = t.accent2;
@@ -3520,22 +3640,21 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
       renderAppearance();
     }));
     const picker = document.getElementById('accentPicker');
-    if (picker) picker.addEventListener('input', (e) => Settings.set('accentCustom', e.target.value));
+    if (picker) picker.addEventListener('change', (e) => Settings.set('accentCustom', e.target.value));
     const fs = document.getElementById('fsRange');
     fs.addEventListener('input', (e) => {
       const v = parseInt(e.target.value, 10);
       document.getElementById('fsLabel').textContent = faNum(v) + ' پیکسل';
-      Settings.set('fontSize', v);
     });
+    fs.addEventListener('change', (e) => Settings.set('fontSize', parseInt(e.target.value, 10)));
     const fxSel = document.getElementById('fxSelect');
-    fxSel.addEventListener('change', (e) => { Settings.set('fx', e.target.value); CB.FX.sync(); });
+    fxSel.addEventListener('change', (e) => Settings.set('fx', e.target.value));
     const fxInt = document.getElementById('fxIntensity');
-    fxInt.addEventListener('change', (e) => { Settings.set('fxIntensity', e.target.value); CB.FX.resize(); });
+    fxInt.addEventListener('change', (e) => Settings.set('fxIntensity', e.target.value));
   }
 
   function applyAll() {
     CB.applySettings();
-    CB.FX.sync();
   }
 
   /* ============================================================
@@ -3761,14 +3880,79 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
   const Chat = { messages: [] };
   function assistantReply(text) {
     const q = CB.normalizeText(text);
-    let best = null, bestScore = 0;
-    ASSISTANT_KB.forEach((item) => {
-      let score = 0;
-      item.keys.forEach((k) => { if (q.includes(CB.normalizeText(k))) score += 1; });
-      if (score > bestScore) { bestScore = score; best = item; }
-    });
-    if (best && bestScore > 0) return best.answer;
-    return 'پاسخ دقیقی برای این پرسش در راهنمای محلی پیدا نکردم. می‌توانید از موضوعات زیر استفاده کنید:\n• ثبت پرونده\n• شناسایی چهره\n• فعال‌سازی و عیب‌یابی موتور\n• دوربین و مجوز دسترسی\n• ذخیره‌سازی و پشتیبان‌گیری\n• آستانه تطبیق و دقت\n• حریم خصوصی\n\nتوجه: این دستیار در نسخه فعلی کاملاً محلی و قاعده‌محور است و به مدل زبانی آنلاین متصل نیست.';
+    const has = (...words) => words.some((w) => q.includes(CB.normalizeText(w)));
+    const go = (route, message) => { CB.Router.go(route); return message; };
+    // Conversational intents first, so "شب بخیر" is not confused with farewell.
+    if (has('خداحافظ', 'خدانگهدار', 'فعلا', 'فعلاً', 'بای', 'روزت بخیر'))
+      return 'خدانگهدار! برای حفظ حریم خصوصی، اگر کارتان تمام شده دوربین را خاموش کنید و در صورت نیاز از داده‌ها پشتیبان بگیرید.';
+    if (has('سلام', 'درود', 'صبح بخیر', 'عصر بخیر', 'شب بخیر', 'وقت بخیر'))
+      return 'سلام! آماده‌ام در کار با چهره‌بان کمکتان کنم. می‌توانید درباره پرونده‌ها، دوربین، موتور تشخیص، ظاهر یا پشتیبان‌گیری بپرسید.';
+    if (has('ممنون', 'مرسی', 'متشکرم', 'دمت گرم', 'سپاس'))
+      return 'خواهش می‌کنم. هر زمان لازم بود، راهنمایی مرحله‌به‌مرحله همین‌جاست.';
+    if (has('خوبی', 'حالت چطوره')) return 'ممنون! آماده‌ام به پرسش‌های مربوط به چهره‌بان پاسخ بدهم.';
+    if (has('راهنما', 'کمک', 'چه کار', 'دستورات', 'چی بلدی'))
+      return 'می‌توانم این کارها را انجام بدهم:\n• بازکردن داشبورد، پرونده‌ها، شناسایی، دوربین، تنظیمات، ظاهر، پشتیبان و حریم خصوصی\n• نمایش آمار پرونده‌ها و تصاویر\n• راهنمای ثبت چند تصویر با نور و زاویه متفاوت\n• راهنمای موتور، خطاها و آستانه تطبیق\n• تغییر تم از طریق نام یا رنگ آن\nنکته: این دستیار محلی است و مدل زبانی عمومی نیست.';
+    if (has('آمار', 'گزارش تعداد', 'چند پرونده', 'تعداد پرونده', 'تعداد تصویر')) {
+      const c = Records.counts();
+      return 'آمار محلی فعلی:\n• پرونده‌ها: ' + fmtInt(c.records) + '\n• تصاویر: ' + fmtInt(c.images) + '\n• ویژگی‌های چهره ذخیره‌شده: ' + fmtInt(c.faces) + '\nاین اطلاعات فقط از پایگاه داده همین مرورگر خوانده شده‌اند.';
+    }
+    // Theme shortcuts
+    const themeWords = [
+      { words:['شفق','aurora'], id:'aurora' }, { words:['ماتریکس','matrix'], id:'matrix' },
+      { words:['قرمز','زرشکی','crimson'], id:'crimson' }, { words:['گرافیتی','گرافیت','graphite'], id:'graphite' },
+      { words:['یاسی','اسطوخودوس','lavender'], id:'lavender' }, { words:['خورشیدی','نارنجی','solar'], id:'solar' },
+      { words:['زمرد','سبز','emerald'], id:'emerald' }, { words:['بنفش','رویال','royal'], id:'royal' },
+      { words:['اقیانوس','آبی','ocean'], id:'ocean' }, { words:['رزگلد','رز گلد','rose'], id:'rose' },
+      { words:['سایبر','نئون','cyber'], id:'cyber' }, { words:['آرکتیک','یخی','arctic'], id:'arctic' },
+      { words:['مینیمال','ساده','minimal'], id:'minimal' }, { words:['شن','کرم','sand'], id:'sand' },
+      { words:['ابسیدین','مشکی','obsidian'], id:'obsidian' }, { words:['پیش فرض','پیش‌فرض','میدنایت','midnight'], id:'midnight' }
+    ];
+    if (has('تم', 'پوسته', 'ظاهر')) {
+      const chosen = themeWords.find((t) => t.words.some((w) => q.includes(CB.normalizeText(w))));
+      if (chosen) {
+        const theme = CB.THEMES.find((t) => t.id === chosen.id);
+        if (theme) { Settings.data.theme = theme.id; Settings.data.accentCustom = ''; Settings.data.mode = theme.mode; Settings.save(); applyAll(); }
+        return 'تم «' + (theme ? theme.name : chosen.id) + '» اعمال شد. برای دیدن همه تم‌ها وارد بخش ظاهر شوید.';
+      }
+      return go('appearance', 'صفحه انتخاب تم‌ها باز شد. از میان ۱۶ تم و حالت روشن/تاریک انتخاب کنید.');
+    }
+    // Navigation commands
+    if (has('داشبورد', 'صفحه اصلی', 'خانه')) return go('dashboard', 'داشبورد باز شد.');
+    if (has('پرونده ها', 'پرونده‌ها', 'لیست افراد', 'فهرست پرونده')) return go('records', 'فهرست پرونده‌ها باز شد.');
+    if (has('ثبت پرونده', 'پرونده جدید', 'افزودن پرونده')) { Ui.form = { recordId: null, images: [], busy: false }; return go('record-form', 'فرم ثبت پرونده جدید باز شد. فقط اطلاعات و تصاویر افراد رضایت‌داده را ثبت کنید.'); }
+    if (has('صفحه شناسایی', 'بخش شناسایی', 'تشخیص تصویر')) return go('recognize', 'صفحه شناسایی باز شد.');
+    if (has('مجوز دوربین', 'اجازه دوربین', 'دوربین فعال نمی‌شود', 'دسترسی دوربین')) return 'دوربین فقط در HTTPS یا localhost کار می‌کند. مجوز Camera را در تنظیمات مرورگر روی اجازه بگذارید، برنامه‌های دیگرِ در حال استفاده از دوربین را ببندید و دوباره تلاش کنید.';
+    if (has('دوربین', 'camera')) return go('camera', 'صفحه دوربین باز شد. برای شروع، دکمه روشن‌کردن دوربین را بزنید؛ دسترسی فقط با اجازه شما فعال می‌شود.');
+    if (has('تنظیمات')) return go('settings', 'تنظیمات برنامه باز شد.');
+    if (has('ظاهر', 'تم ها', 'تم‌ها')) return go('appearance', 'بخش ظاهر و ۱۶ تم آماده باز شد.');
+    if (has('پشتیبان', 'بکاپ', 'backup')) return go('backup', 'بخش پشتیبان‌گیری باز شد. فایل پشتیبان شامل تصاویر و داده‌های زیست‌سنجی است؛ آن را محرمانه نگه دارید.');
+    if (has('حریم خصوصی', 'امنیت', 'رضایت')) return go('privacy', 'بخش حریم خصوصی باز شد.');
+    if (has('گزارش ها', 'گزارش‌ها', 'تاریخچه')) return go('logs', 'تاریخچه فعالیت باز شد.');
+    if (has('عیب یابی', 'عیب‌یابی', 'مشکل', 'خطا')) return go('help', 'مرکز راهنما و عیب‌یابی باز شد.');
+    if (has('موتور را فعال', 'فعال کن', 'فعال سازی موتور', 'فعال‌سازی موتور', 'راه اندازی موتور', 'راه‌اندازی موتور')) {
+      CB.activateEngine();
+      return 'درخواست فعال‌سازی موتور ارسال شد. بارگذاری مدل‌ها ممکن است به اینترنت و چند مگابایت دانلود نیاز داشته باشد؛ وضعیت را در کارت موتور ببینید.';
+    }
+    if (has('ثبت', 'پرونده', 'جدید', 'افزودن')) {
+      return 'برای ثبت، از «ثبت پرونده» وارد فرم شوید. نام را وارد کنید و چند عکس روشن و واضح از همان فرد با رضایت او اضافه کنید. بهتر است عکس‌ها از روبه‌رو و زاویه‌های ملایم باشند.';
+    }
+    if (has('شناسایی', 'تطبیق', 'گالری', 'عکس')) {
+      return 'برای شناسایی، موتور را فعال کنید، وارد صفحه شناسایی شوید و تصویر را انتخاب کنید. نتیجه فقط تطبیق احتمالی با پرونده‌های ثبت‌شده است؛ اگر کیفیت یا فاصله مناسب نباشد، هویت اعلام نمی‌شود.';
+    }
+    if (has('موتور', 'بارگذاری', 'دانلود', 'cdn', 'آفلاین')) {
+      return 'موتور از face-api و TensorFlow.js استفاده می‌کند. بارگذاری اولیه کتابخانه و مدل‌ها به اینترنت نیاز دارد؛ پس از کش‌شدن منابع، اجرای آفلاین ممکن است. اگر خطا دارید، متن دقیق خطای کارت موتور را بررسی کنید.';
+    }
+    if (has('عینک', 'زاویه', 'نور', 'چند عکس', 'تصویر مکمل')) {
+      return 'برای افزایش پایداری، فقط با رضایت فرد ۳ تا ۵ عکس واضح از همان شخص ثبت کنید: روبه‌رو، کمی متمایل به چپ و راست، با نور یکنواخت و بدون تاری. اگر عینک معمولی بخشی از استفاده روزمره اوست، می‌توانید یک تصویر با عینک و یک تصویر بدون آن داشته باشید. زاویه شدید، پوشاندن صورت و نور پشت‌سر ممکن است نتیجه را ضعیف کند. هیچ روشی دقت صددرصد را تضمین نمی‌کند.';
+    }
+    if (has('آستانه', 'دقت', 'اشتباه', 'similarity', 'فاصله'))
+      return 'آستانه، فاصله مجاز بین بردارهای ویژگی را کنترل می‌کند؛ مقدار کمتر سخت‌گیرانه‌تر است و ممکن است افراد درست را هم رد کند. مقدار بیشتر پذیرش اشتباه را افزایش می‌دهد. برای ارائه، مقدار پیش‌فرض را تغییر ندهید مگر اینکه با داده آزمایشی و رضایت‌مندانه ارزیابی کرده باشید.';
+    if (has('ذخیره', 'indexeddb', 'فضا', 'بازیابی'))
+      return 'پرونده‌ها و تصاویر در IndexedDB همین مرورگر ذخیره می‌شوند. از بخش پشتیبان‌گیری خروجی JSON بگیرید و آن را امن نگه دارید؛ پاک‌کردن داده‌های سایت ممکن است همه اطلاعات را حذف کند.';
+    if (has('دوربین', 'مجوز', 'camera', 'دسترسی'))
+      return 'دوربین فقط در HTTPS یا localhost در دسترس است. هنگام درخواست مرورگر اجازه بدهید؛ برای حفظ حریم خصوصی بعد از پایان کار آن را خاموش کنید.';
+    if (has('خوب', 'عالی', 'فوق العاده')) return 'خوشحالم که چهره‌بان برایتان مفید است. اگر بخواهید می‌توانم راهنمای هر بخش را هم توضیح بدهم.';
+    return 'متوجه موضوع کلی پرسش شدم، اما پاسخ مشخصی در راهنمای داخلی ندارم. می‌توانید دقیق‌تر بپرسید یا از من بخواهید بخش داشبورد، پرونده‌ها، شناسایی، دوربین، ظاهر، تنظیمات، پشتیبان یا حریم خصوصی را باز کنم.\n\nتوجه: این دستیار محلی و قاعده‌محور است؛ برای فهم آزاد همه جمله‌ها به مدل زبانی واقعی و اتصال امن سمت سرور نیاز است.';
   }
 
   function renderAssistant() {
@@ -3780,11 +3964,11 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     }
     Ui.view.innerHTML =
       '<section class="view-enter stack">' +
-      CB.pageHead('دستیار هوشمند چهره‌بان', 'راهنمای محلی و قاعده‌محور — بدون اتصال به سرویس بیرونی') +
+      CB.pageHead('دستیار هوشمند چهره‌بان', 'دستیار محلی با فرمان‌های فارسی، راهنمایی و میانبرهای برنامه') +
       '<div class="alert info">' + icon('i-info') + '<div>این دستیار در نسخه فعلی <b>محلی</b> است و از راهنمای داخلی برنامه پاسخ می‌دهد. هیچ کلید API و هیچ درخواستی به سرویس هوش مصنوعی ارسال نمی‌شود.</div></div>' +
       '<div class="card"><div class="chat" id="chatBox"></div>' +
       '<div class="quick-replies" style="margin-top:10px" id="quickReplies">' +
-      ['ثبت پرونده', 'شناسایی چهره', 'موتور فعال نمی‌شود', 'مجوز دوربین', 'پشتیبان‌گیری', 'آستانه تطبیق'].map((q) =>
+      ['سلام', 'آمار پرونده‌ها', 'تم شفق را فعال کن', 'بازکردن دوربین', 'راهنمای چند زاویه', 'حریم خصوصی', 'ثبت پرونده', 'موتور فعال نمی‌شود', 'پشتیبان‌گیری'].map((q) =>
         '<button class="chip accent" type="button" data-quick="' + esc(q) + '">' + esc(q) + '</button>').join('') +
       '</div>' +
       '<div class="row" style="margin-top:12px;gap:9px">' +
@@ -3997,7 +4181,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
         if (Engine.isReady()) {
           try {
             const imgEl = await Images.loadImage(proc.dataUrl);
-            const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 416 }));
+            const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 352, retry: false }));
             if (res.ok && res.faces.length) { faces = res.faces; ms = res.ms; }
           } catch (e) {}
         }
@@ -4054,7 +4238,10 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     'cam-stop': () => { Camera.stop(); Router.render(); },
     'cam-switch': () => Camera.switchCamera(),
     'cam-shot': () => Camera.takeShot(),
+    'cam-precise': () => Camera.shot && Camera.processShot(Camera.shot, true),
     'cam-live': () => Camera.toggleLive(),
+    'cam-consent-yes': () => Camera.consentSave(),
+    'cam-consent-no': () => Camera.consentDecline(),
     'go-dashboard': () => Router.go('dashboard'),
     'go-records': () => Router.go('records'),
     'go-recognize': () => Router.go('recognize'),
@@ -4201,7 +4388,6 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
         const next = !Settings.data[key];
         Settings.set(key, next);
         toggle.setAttribute('aria-checked', String(next));
-        if (key === 'anim' || key === 'showBoxes') { CB.FX.sync(); }
         return;
       }
     });
@@ -4242,7 +4428,7 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     toast('در حال بازپردازش تصویر…', 'info', 2000);
     try {
       const imgEl = await Images.loadImage(img.dataUrl);
-      const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 416 }));
+      const res = await Engine.enqueue(() => Engine.analyze(imgEl, { inputSize: 352, retry: false }));
       if (!res.ok) { toast(res.title + ' — ' + res.message, 'error', 5500); return; }
       const r = await Records.reprocessImage(rec.id, imageId, res.faces, res.ms);
       if (r.ok) toast('بازپردازش موفق: ' + CB.faNum(r.faces) + ' بردار ویژگی', 'success');
@@ -4284,10 +4470,13 @@ html[data-cards="off"] .stat,html[data-cards="off"] .rec-card{transition:none}
     CB.FX.init();
     CB.Net.init();
     bindGlobalEvents();
+    window.addEventListener('pagehide', () => { try { Settings.save(); } catch (e) {} });
 
     const t0 = performance.now();
     const dbOk = await DB.open();
     if (dbOk) {
+      // Ask the browser to protect this origin's local database from automatic eviction.
+      if (navigator.storage && navigator.storage.persist) { DB.persist().then((granted) => { CB.storagePersistent = !!granted; }).catch(() => { CB.storagePersistent = false; }); }
       await Promise.all([Stats.load(), Logs.load()]);
       await Records.refresh();
     } else {
